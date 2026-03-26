@@ -53,6 +53,13 @@ Changed: Fonts switched from system fonts to DM Sans (body) + DM Mono (code/mono
 Removed: All hardcoded project/note/goal/file data
 Known limitation: localStorage is per-browser, not cross-device — export/import is the current sync workaround
 
+Changelog
+v2.0.1 — Fix CI/CD pipeline errors
+
+Fixed: Missing package-lock.json causing npm ci to fail (switched to npm install)
+Fixed: Deprecated Node.js 20 actions updated to Node.js 24-compatible versions
+Fixed: Bumped actions/checkout to @v4 and actions/setup-node to @v4 with Node 22
+
 
 Roadmap (not yet built)
 
