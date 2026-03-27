@@ -141,6 +141,31 @@ function NoteEditor({ note, onSave }) {
     }, 600)
   }
 
+function exportNote(note, format) {
+  const plain = note.body
+    ? note.body.replace(/<[^>]*>/g, '')
+    : ''
+
+  let content = plain
+  let mime = 'text/plain'
+  let ext = 'txt'
+
+  if (format === 'md') {
+    // Preserve basic structure as markdown
+    content = (note.title ? `# ${note.title}\n\n` : '') + plain
+    ext = 'md'
+  } else {
+    content = (note.title ? `${note.title}\n${'='.repeat(note.title.length)}\n\n` : '') + plain
+  }
+
+  const blob = new Blob([content], { type: mime })
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = `${(note.title || 'note').replace(/[^a-z0-9]/gi, '_').toLowerCase()}.${ext}`
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
+  
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Toolbar />
@@ -169,6 +194,30 @@ function NoteEditor({ note, onSave }) {
             <span> · Updated {format(new Date(note.updatedAt), 'MMM d')}</span>
           )}
         </div>
+        <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+  <button
+    onClick={() => exportNote(note, 'txt')}
+    style={{
+      fontSize: 11, padding: '3px 10px',
+      border: '0.5px solid var(--border-2)',
+      borderRadius: 5, background: 'transparent',
+      color: 'var(--text-3)', cursor: 'pointer',
+    }}
+  >
+    Export .txt
+  </button>
+  <button
+    onClick={() => exportNote(note, 'md')}
+    style={{
+      fontSize: 11, padding: '3px 10px',
+      border: '0.5px solid var(--border-2)',
+      borderRadius: 5, background: 'transparent',
+      color: 'var(--text-3)', cursor: 'pointer',
+    }}
+  >
+    Export .md
+  </button>
+</div>
       </div>
 
       {/* Body */}
