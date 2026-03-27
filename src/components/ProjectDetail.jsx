@@ -7,6 +7,46 @@ import { Pipeline } from './Pipeline.jsx'
 
 const TABS = ['notes', 'goals', 'pipeline']
 
+function InlineTagInput({ onAdd }) {
+  const [val, setVal] = React.useState('')
+  const [active, setActive] = React.useState(false)
+
+  if (!active) return (
+    <span
+      onClick={() => setActive(true)}
+      style={{
+        fontSize: 11, color: 'var(--text-3)', cursor: 'pointer',
+        padding: '2px 8px', border: '0.5px dashed var(--border-2)',
+        borderRadius: 4,
+      }}
+    >+ tag</span>
+  )
+
+  return (
+    <input
+      autoFocus
+      value={val}
+      onChange={e => setVal(e.target.value)}
+      onKeyDown={e => {
+        if (e.key === 'Enter' && val.trim()) {
+          onAdd(val.trim())
+          setVal('')
+          setActive(false)
+        }
+        if (e.key === 'Escape') { setVal(''); setActive(false) }
+      }}
+      onBlur={() => { setVal(''); setActive(false) }}
+      placeholder="new tag…"
+      style={{
+        fontSize: 11, padding: '2px 8px',
+        border: '0.5px solid var(--acc)',
+        borderRadius: 4, background: 'var(--bg)',
+        color: 'var(--text)', outline: 'none', width: 80,
+      }}
+    />
+  )
+}
+
 export function ProjectDetail({
   project,
   onUpdate,
@@ -75,16 +115,33 @@ export function ProjectDetail({
         </div>
 
         {/* Tags */}
-        {(project.tags || []).length > 0 && (
-          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 8 }}>
-            {project.tags.map((t, i) => (
-              <span key={i} style={{ padding: '2px 7px', borderRadius: 4, fontSize: 10, background: 'var(--bg-3)', color: 'var(--text-2)' }}>
-                {t}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
+{/* Inline tag editor */}
+<div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 8, alignItems: 'center' }}>
+  {(project.tags || []).map((t, i) => (
+    <span
+      key={i}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 4,
+        padding: '2px 8px', borderRadius: 4,
+        fontSize: 11, background: 'var(--bg-3)', color: 'var(--text-2)',
+      }}
+    >
+      {t}
+      <span
+        onClick={() => {
+          const newTags = (project.tags || []).filter((_, idx) => idx !== i)
+          onUpdate({ tags: newTags })
+        }}
+        style={{ cursor: 'pointer', color: 'var(--text-3)', fontSize: 13, lineHeight: 1 }}
+      >×</span>
+    </span>
+  ))}
+  <InlineTagInput onAdd={tag => {
+    if (tag && !(project.tags || []).includes(tag)) {
+      onUpdate({ tags: [...(project.tags || []), tag] })
+    }
+  }} />
+</div>
 
       {/* Tabs */}
       <div style={{
