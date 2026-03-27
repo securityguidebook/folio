@@ -105,15 +105,25 @@ export function useStore() {
   }, [commit])
 
   const toggleGoal = useCallback((projectId, goalId) => {
-    commit(s => ({
-      ...s,
-      projects: s.projects.map(p =>
-        p.id === projectId
-          ? { ...p, goals: p.goals.map(g => g.id === goalId ? { ...g, done: !g.done } : g) }
-          : p
-      ),
-    }))
-  }, [commit])
+  commit(s => ({
+    ...s,
+    projects: s.projects.map(p => {
+      if (p.id !== projectId) return p
+      const updatedGoals = p.goals.map(g =>
+        g.id === goalId ? { ...g, done: !g.done } : g
+      )
+      const total = updatedGoals.length
+      const done = updatedGoals.filter(g => g.done).length
+      const progress = total > 0 ? Math.round((done / total) * 100) : p.progress
+      return {
+        ...p,
+        goals: updatedGoals,
+        progress,
+        updated_at: new Date().toISOString(),
+      }
+    }),
+  }))
+}, [commit])
 
   const deleteGoal = useCallback((projectId, goalId) => {
     commit(s => ({
