@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
+import { supabase } from './lib/supabase.js'
 import { useStore } from './store/useStore.js'
+import { Auth } from './components/Auth.jsx'
 import { Sidebar } from './components/Sidebar.jsx'
 import { Dashboard } from './components/Dashboard.jsx'
 import { Timeline } from './components/Timeline.jsx'
@@ -8,14 +10,28 @@ import { ProjectModal } from './components/ProjectModal.jsx'
 import { SettingsModal } from './components/SettingsModal.jsx'
 
 export default function App() {
-  const store = useStore()
+  const [user, setUser] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
   const [view, setView] = useState('dashboard')
   const [activeProjectId, setActiveProjectId] = useState(null)
   const [showNewProject, setShowNewProject] = useState(false)
   const [editProject, setEditProject] = useState(null)
   const [showSettings, setShowSettings] = useState(false)
 
-  // Apply theme
+  const store = useStore(user)
+
+  // Listen for auth state changes
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      setAuthLoading(false)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', store.settings.theme || 'light')
   }, [store.settings.theme])
@@ -31,16 +47,34 @@ export default function App() {
     setActiveProjectId(null)
   }
 
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    setView('dashboard')
+    setActiveProjectId(null)
+  }
+
+  if (authLoading) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-3)' }}>
+        <div style={{ fontSize: 13, color: 'var(--text-3)' }}>Loading…</div>
+      </div>
+    )
+  }
+
+  if (!user) return <Auth />
+
+  if (store.loading) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-3)' }}>
+        <div style={{ fontSize: 13, color: 'var(--text-3)' }}>Loading your projects…</div>
+      </div>
+    )
+  }
+
   const activeProject = store.projects.find(p => p.id === activeProjectId)
 
   return (
-    <div style={{
-      display: 'flex',
-      height: '100vh',
-      width: '100vw',
-      background: 'var(--bg-3)',
-      overflow: 'hidden',
-    }}>
+    <div style={{ display: 'flex', height: '100vh', width: '100vw', background: 'var(--bg-3)', overflow: 'hidden' }}>
       <Sidebar
         view={view}
         activeProjectId={activeProjectId}
@@ -49,16 +83,10 @@ export default function App() {
         onNav={navTo}
         onSettings={() => setShowSettings(true)}
         onNewProject={() => setShowNewProject(true)}
+        onSignOut={handleSignOut}
       />
 
-      <main style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        background: 'var(--bg)',
-        minWidth: 0,
-      }}>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg)', minWidth: 0 }}>
         {view === 'dashboard' && (
           <Dashboard
             projects={store.projects}
@@ -66,11 +94,7 @@ export default function App() {
             onNewProject={() => setShowNewProject(true)}
           />
         )}
-
-        {view === 'timeline' && (
-          <Timeline projects={store.projects} />
-        )}
-
+        {view === 'timeline' && <Timeline projects={store.projects} />}
         {view === 'project' && activeProject && (
           <ProjectDetail
             project={activeProject}
@@ -88,7 +112,6 @@ export default function App() {
             onDeletePipeline={store.deletePipelineItem}
           />
         )}
-
         {view === 'project' && !activeProject && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 13, color: 'var(--text-3)' }}>
             Project not found.
@@ -96,14 +119,9 @@ export default function App() {
         )}
       </main>
 
-      {/* Modals */}
       {showNewProject && (
-        <ProjectModal
-          onSave={store.addProject}
-          onClose={() => setShowNewProject(false)}
-        />
+        <ProjectModal onSave={store.addProject} onClose={() => setShowNewProject(false)} />
       )}
-
       {editProject && (
         <ProjectModal
           project={editProject}
@@ -111,12 +129,12 @@ export default function App() {
           onClose={() => setEditProject(null)}
         />
       )}
-
       {showSettings && (
         <SettingsModal
           settings={store.settings}
           onSave={store.updateSettings}
           onClose={() => setShowSettings(false)}
+          onSignOut={handleSignOut}
         />
       )}
     </div>
