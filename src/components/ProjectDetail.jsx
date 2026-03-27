@@ -70,6 +70,7 @@ export function ProjectDetail({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+
       {/* Project header */}
       <div style={{
         padding: '14px 20px',
@@ -114,34 +115,34 @@ export function ProjectDetail({
           )}
         </div>
 
-        {/* Tags */}
-{/* Inline tag editor */}
-<div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 8, alignItems: 'center' }}>
-  {(project.tags || []).map((t, i) => (
-    <span
-      key={i}
-      style={{
-        display: 'inline-flex', alignItems: 'center', gap: 4,
-        padding: '2px 8px', borderRadius: 4,
-        fontSize: 11, background: 'var(--bg-3)', color: 'var(--text-2)',
-      }}
-    >
-      {t}
-      <span
-        onClick={() => {
-          const newTags = (project.tags || []).filter((_, idx) => idx !== i)
-          onUpdate({ tags: newTags })
-        }}
-        style={{ cursor: 'pointer', color: 'var(--text-3)', fontSize: 13, lineHeight: 1 }}
-      >×</span>
-    </span>
-  ))}
-  <InlineTagInput onAdd={tag => {
-    if (tag && !(project.tags || []).includes(tag)) {
-      onUpdate({ tags: [...(project.tags || []), tag] })
-    }
-  }} />
-</div>
+        {/* Inline tag editor */}
+        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 8, alignItems: 'center' }}>
+          {(project.tags || []).map((t, i) => (
+            <span
+              key={i}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                padding: '2px 8px', borderRadius: 4,
+                fontSize: 11, background: 'var(--bg-3)', color: 'var(--text-2)',
+              }}
+            >
+              {t}
+              <span
+                onClick={() => {
+                  const newTags = (project.tags || []).filter((_, idx) => idx !== i)
+                  onUpdate({ tags: newTags })
+                }}
+                style={{ cursor: 'pointer', color: 'var(--text-3)', fontSize: 13, lineHeight: 1 }}
+              >×</span>
+            </span>
+          ))}
+          <InlineTagInput onAdd={tag => {
+            if (tag && !(project.tags || []).includes(tag)) {
+              onUpdate({ tags: [...(project.tags || []), tag] })
+            }
+          }} />
+        </div>
+      </div>{/* ← this was the missing closing tag for the project header */}
 
       {/* Tabs */}
       <div style={{
