@@ -52,8 +52,10 @@ function NavItem({ icon, label, active, onClick, color }) {
 
 export function Sidebar({ view, activeProjectId, projects, onNav, onSettings, onNewProject, settings }) {
   const initials = settings.userName
-    ? settings.userName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-    : 'GU'
+  ? settings.userName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+  : settings.userEmail
+    ? settings.userEmail[0].toUpperCase()
+    : '?'
 
   return (
     <div style={{
@@ -117,8 +119,8 @@ export function Sidebar({ view, activeProjectId, projects, onNav, onSettings, on
           }}>
             {initials}
           </div>
-          <span style={{ fontSize: 12, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-            {settings.userEmail || 'Set up profile →'}
+         <span style={{ fontSize: 12, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+            {settings.userName || settings.userEmail || 'Set up profile →'}
           </span>
           <div onClick={onSettings} style={{ cursor: 'pointer', color: 'var(--text-3)' }}>{iconSettings}</div>
         </div>
