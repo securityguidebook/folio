@@ -97,20 +97,6 @@ export function ProjectModal({ project, onSave, onClose }) {
               ))}
             </select>
           </div>
-          <div>
-            {label('Progress (%)')}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <input
-                type="range" min="0" max="100" step="1"
-                value={form.progress}
-                onChange={e => set('progress', e.target.value)}
-                style={{ flex: 1 }}
-              />
-              <span style={{ fontSize: 13, color: 'var(--text)', minWidth: 32, textAlign: 'right' }}>
-                {form.progress}%
-              </span>
-            </div>
-          </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
