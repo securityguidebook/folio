@@ -1,204 +1,223 @@
 import { useState, useEffect, useCallback } from 'react'
+import { supabase } from '../lib/supabase.js'
 
-const STORAGE_KEY = 'folio_data_v1'
+export function useStore(user) {
+  const [projects, setProjects] = useState([])
+  const [settings, setSettings] = useState({ userName: '', userEmail: '', timezone: 'UTC', theme: 'light' })
+  const [loading, setLoading] = useState(true)
 
-const DEFAULT_STATE = {
-  projects: [],
-  settings: {
-    userName: '',
-    userEmail: '',
-    theme: 'light',
-  },
-}
+  // ── Load all data on mount ─────────────────────────────────
+  useEffect(() => {
+    if (!user) { setProjects([]); setLoading(false); return }
+    loadAll()
+  }, [user])
 
-function load() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch {}
-  return DEFAULT_STATE
-}
+  async function loadAll() {
+    setLoading(true)
+    try {
+      const [{ data: prof }, { data: proj }, { data: notes }, { data: goals }, { data: pipeline }] =
+        await Promise.all([
+          supabase.from('profiles').select('*').eq('id', user.id).single(),
+          supabase.from('projects').select('*').eq('user_id', user.id).order('created_at'),
+          supabase.from('notes').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+          supabase.from('goals').select('*').eq('user_id', user.id).order('created_at'),
+          supabase.from('pipeline_items').select('*').eq('user_id', user.id).order('created_at'),
+        ])
 
-function save(state) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-  } catch {}
-}
+      if (prof) {
+        setSettings({
+          userName: prof.name || '',
+          userEmail: user.email || '',
+          timezone: prof.timezone || 'UTC',
+          theme: 'light',
+          plan: prof.plan || 'free',
+        })
+      }
 
-export function useStore() {
-  const [state, setState] = useState(() => load())
-
-  const commit = useCallback((updater) => {
-    setState(prev => {
-      const next = updater(prev)
-      save(next)
-      return next
-    })
-  }, [])
+      const assembled = (proj || []).map(p => ({
+        ...p,
+        startDate: p.start_date,
+        targetDate: p.target_date,
+        tags: p.tags || [],
+        notes: (notes || []).filter(n => n.project_id === p.id),
+        goals: (goals || []).filter(g => g.project_id === p.id),
+        pipeline: {
+          backlog:    (pipeline || []).filter(i => i.project_id === p.id && i.column_key === 'backlog'),
+          upNext:     (pipeline || []).filter(i => i.project_id === p.id && i.column_key === 'upNext'),
+          inProgress: (pipeline || []).filter(i => i.project_id === p.id && i.column_key === 'inProgress'),
+          done:       (pipeline || []).filter(i => i.project_id === p.id && i.column_key === 'done'),
+        },
+      }))
+      setProjects(assembled)
+    } catch (e) {
+      console.error('Load error', e)
+    }
+    setLoading(false)
+  }
 
   // ── Projects ──────────────────────────────────────────────
-  const addProject = useCallback((project) => {
-    commit(s => ({
-      ...s,
-      projects: [...s.projects, project],
-    }))
-  }, [commit])
+  const addProject = useCallback(async (project) => {
+    const { data, error } = await supabase.from('projects').insert({
+      user_id: user.id,
+      name: project.name,
+      description: project.description,
+      color: project.color,
+      status: project.status,
+      progress: project.progress || 0,
+      start_date: project.startDate || null,
+      target_date: project.targetDate || null,
+      tags: project.tags || [],
+    }).select().single()
+    if (error) { console.error(error); return }
+    setProjects(prev => [...prev, {
+      ...data,
+      startDate: data.start_date,
+      targetDate: data.target_date,
+      tags: data.tags || [],
+      notes: [], goals: [],
+      pipeline: { backlog: [], upNext: [], inProgress: [], done: [] },
+    }])
+  }, [user])
 
-  const updateProject = useCallback((id, updates) => {
-    commit(s => ({
-      ...s,
-      projects: s.projects.map(p => p.id === id ? { ...p, ...updates } : p),
-    }))
-  }, [commit])
+  const updateProject = useCallback(async (id, updates) => {
+    const dbUpdates = { ...updates, updated_at: new Date().toISOString() }
+    if (updates.startDate !== undefined) { dbUpdates.start_date = updates.startDate; delete dbUpdates.startDate }
+    if (updates.targetDate !== undefined) { dbUpdates.target_date = updates.targetDate; delete dbUpdates.targetDate }
+    delete dbUpdates.notes; delete dbUpdates.goals; delete dbUpdates.pipeline
+    await supabase.from('projects').update(dbUpdates).eq('id', id)
+    setProjects(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p))
+  }, [user])
 
-  const deleteProject = useCallback((id) => {
-    commit(s => ({
-      ...s,
-      projects: s.projects.filter(p => p.id !== id),
-    }))
-  }, [commit])
+  const deleteProject = useCallback(async (id) => {
+    await supabase.from('projects').delete().eq('id', id)
+    setProjects(prev => prev.filter(p => p.id !== id))
+  }, [user])
 
   // ── Notes ─────────────────────────────────────────────────
-  const addNote = useCallback((projectId, note) => {
-    commit(s => ({
-      ...s,
-      projects: s.projects.map(p =>
-        p.id === projectId
-          ? { ...p, notes: [note, ...(p.notes || [])] }
-          : p
-      ),
-    }))
-  }, [commit])
+  const addNote = useCallback(async (projectId, note) => {
+    const { data, error } = await supabase.from('notes').insert({
+      project_id: projectId,
+      user_id: user.id,
+      title: note.title || '',
+      body: note.body || '',
+    }).select().single()
+    if (error) { console.error(error); return }
+    setProjects(prev => prev.map(p =>
+      p.id === projectId ? { ...p, notes: [data, ...p.notes] } : p
+    ))
+  }, [user])
 
-  const updateNote = useCallback((projectId, noteId, updates) => {
-    commit(s => ({
-      ...s,
-      projects: s.projects.map(p =>
-        p.id === projectId
-          ? { ...p, notes: p.notes.map(n => n.id === noteId ? { ...n, ...updates } : n) }
-          : p
-      ),
-    }))
-  }, [commit])
+  const updateNote = useCallback(async (projectId, noteId, updates) => {
+    await supabase.from('notes').update({
+      ...updates,
+      updated_at: new Date().toISOString(),
+    }).eq('id', noteId)
+    setProjects(prev => prev.map(p =>
+      p.id === projectId
+        ? { ...p, notes: p.notes.map(n => n.id === noteId ? { ...n, ...updates } : n) }
+        : p
+    ))
+  }, [user])
 
-  const deleteNote = useCallback((projectId, noteId) => {
-    commit(s => ({
-      ...s,
-      projects: s.projects.map(p =>
-        p.id === projectId
-          ? { ...p, notes: p.notes.filter(n => n.id !== noteId) }
-          : p
-      ),
-    }))
-  }, [commit])
+  const deleteNote = useCallback(async (projectId, noteId) => {
+    await supabase.from('notes').delete().eq('id', noteId)
+    setProjects(prev => prev.map(p =>
+      p.id === projectId ? { ...p, notes: p.notes.filter(n => n.id !== noteId) } : p
+    ))
+  }, [user])
 
   // ── Goals ─────────────────────────────────────────────────
-  const addGoal = useCallback((projectId, goal) => {
-    commit(s => ({
-      ...s,
-      projects: s.projects.map(p =>
-        p.id === projectId
-          ? { ...p, goals: [...(p.goals || []), goal] }
-          : p
-      ),
-    }))
-  }, [commit])
+  const addGoal = useCallback(async (projectId, goal) => {
+    const { data, error } = await supabase.from('goals').insert({
+      project_id: projectId,
+      user_id: user.id,
+      text: goal.text,
+      note: goal.note || '',
+      done: false,
+    }).select().single()
+    if (error) { console.error(error); return }
+    setProjects(prev => prev.map(p =>
+      p.id === projectId ? { ...p, goals: [...p.goals, data] } : p
+    ))
+  }, [user])
 
-  const toggleGoal = useCallback((projectId, goalId) => {
-  commit(s => ({
-    ...s,
-    projects: s.projects.map(p => {
+  const toggleGoal = useCallback(async (projectId, goalId) => {
+    setProjects(prev => prev.map(p => {
       if (p.id !== projectId) return p
-      const updatedGoals = p.goals.map(g =>
-        g.id === goalId ? { ...g, done: !g.done } : g
-      )
+      const updatedGoals = p.goals.map(g => g.id === goalId ? { ...g, done: !g.done } : g)
       const total = updatedGoals.length
       const done = updatedGoals.filter(g => g.done).length
       const progress = total > 0 ? Math.round((done / total) * 100) : p.progress
-      return {
-        ...p,
-        goals: updatedGoals,
-        progress,
-        updated_at: new Date().toISOString(),
-      }
-    }),
-  }))
-}, [commit])
-
-  const deleteGoal = useCallback((projectId, goalId) => {
-    commit(s => ({
-      ...s,
-      projects: s.projects.map(p =>
-        p.id === projectId
-          ? { ...p, goals: p.goals.filter(g => g.id !== goalId) }
-          : p
-      ),
+      supabase.from('goals').update({ done: !p.goals.find(g => g.id === goalId).done }).eq('id', goalId)
+      supabase.from('projects').update({ progress, updated_at: new Date().toISOString() }).eq('id', projectId)
+      return { ...p, goals: updatedGoals, progress }
     }))
-  }, [commit])
+  }, [])
+
+  const deleteGoal = useCallback(async (projectId, goalId) => {
+    await supabase.from('goals').delete().eq('id', goalId)
+    setProjects(prev => prev.map(p =>
+      p.id === projectId ? { ...p, goals: p.goals.filter(g => g.id !== goalId) } : p
+    ))
+  }, [user])
 
   // ── Pipeline ──────────────────────────────────────────────
-  const addPipelineItem = useCallback((projectId, column, item) => {
-    commit(s => ({
-      ...s,
-      projects: s.projects.map(p => {
-        if (p.id !== projectId) return p
-        const pipeline = p.pipeline || { backlog: [], upNext: [], inProgress: [], done: [] }
-        return { ...p, pipeline: { ...pipeline, [column]: [...pipeline[column], item] } }
-      }),
+  const addPipelineItem = useCallback(async (projectId, column, item) => {
+    const { data, error } = await supabase.from('pipeline_items').insert({
+      project_id: projectId,
+      user_id: user.id,
+      column_key: column,
+      text: item.text,
+      note: item.note || '',
+    }).select().single()
+    if (error) { console.error(error); return }
+    setProjects(prev => prev.map(p => {
+      if (p.id !== projectId) return p
+      return { ...p, pipeline: { ...p.pipeline, [column]: [...p.pipeline[column], data] } }
     }))
-  }, [commit])
+  }, [user])
 
-  const movePipelineItem = useCallback((projectId, fromCol, toCol, itemId) => {
-    commit(s => ({
-      ...s,
-      projects: s.projects.map(p => {
-        if (p.id !== projectId) return p
-        const pipeline = p.pipeline || { backlog: [], upNext: [], inProgress: [], done: [] }
-        const item = pipeline[fromCol].find(i => i.id === itemId)
-        if (!item) return p
-        return {
-          ...p,
-          pipeline: {
-            ...pipeline,
-            [fromCol]: pipeline[fromCol].filter(i => i.id !== itemId),
-            [toCol]: [...pipeline[toCol], item],
-          },
-        }
-      }),
+  const movePipelineItem = useCallback(async (projectId, fromCol, toCol, itemId) => {
+    await supabase.from('pipeline_items').update({ column_key: toCol }).eq('id', itemId)
+    setProjects(prev => prev.map(p => {
+      if (p.id !== projectId) return p
+      const item = p.pipeline[fromCol].find(i => i.id === itemId)
+      if (!item) return p
+      return {
+        ...p,
+        pipeline: {
+          ...p.pipeline,
+          [fromCol]: p.pipeline[fromCol].filter(i => i.id !== itemId),
+          [toCol]: [...p.pipeline[toCol], { ...item, column_key: toCol }],
+        },
+      }
     }))
-  }, [commit])
+  }, [])
 
-  const deletePipelineItem = useCallback((projectId, column, itemId) => {
-    commit(s => ({
-      ...s,
-      projects: s.projects.map(p => {
-        if (p.id !== projectId) return p
-        const pipeline = p.pipeline || { backlog: [], upNext: [], inProgress: [], done: [] }
-        return { ...p, pipeline: { ...pipeline, [column]: pipeline[column].filter(i => i.id !== itemId) } }
-      }),
+  const deletePipelineItem = useCallback(async (projectId, column, itemId) => {
+    await supabase.from('pipeline_items').delete().eq('id', itemId)
+    setProjects(prev => prev.map(p => {
+      if (p.id !== projectId) return p
+      return { ...p, pipeline: { ...p.pipeline, [column]: p.pipeline[column].filter(i => i.id !== itemId) } }
     }))
-  }, [commit])
+  }, [])
 
   // ── Settings ──────────────────────────────────────────────
-  const updateSettings = useCallback((updates) => {
-    commit(s => ({ ...s, settings: { ...s.settings, ...updates } }))
-  }, [commit])
+  const updateSettings = useCallback(async (updates) => {
+    await supabase.from('profiles').update({
+      name: updates.userName,
+      timezone: updates.timezone,
+      updated_at: new Date().toISOString(),
+    }).eq('id', user.id)
+    setSettings(prev => ({ ...prev, ...updates }))
+  }, [user])
 
   return {
-    projects: state.projects,
-    settings: state.settings,
-    addProject,
-    updateProject,
-    deleteProject,
-    addNote,
-    updateNote,
-    deleteNote,
-    addGoal,
-    toggleGoal,
-    deleteGoal,
-    addPipelineItem,
-    movePipelineItem,
-    deletePipelineItem,
+    projects, settings, loading,
+    addProject, updateProject, deleteProject,
+    addNote, updateNote, deleteNote,
+    addGoal, toggleGoal, deleteGoal,
+    addPipelineItem, movePipelineItem, deletePipelineItem,
     updateSettings,
   }
 }
