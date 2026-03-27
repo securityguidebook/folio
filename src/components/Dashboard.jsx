@@ -89,9 +89,9 @@ function ProjectCard({ project, onClick }) {
         <span>{noteCount} {noteCount === 1 ? 'note' : 'notes'}</span>
         {fileCount > 0 && <span>{fileCount} {fileCount === 1 ? 'file' : 'files'}</span>}
         {lastNote && (
-          <span style={{ marginLeft: 'auto', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>
-            Last: {lastNote.title}
-          </span>
+          <span style={{ marginLeft: 'auto', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>
+            Last: {lastNote.title} · {format(new Date(lastNote.updatedAt || lastNote.createdAt), 'MMM d')}
+            </span>
         )}
       </div>
     </div>
