@@ -89,6 +89,18 @@ export function SettingsModal({ settings, onSave, onClose }) {
           </p>
         </div>
 
+<div style={{ borderTop: '0.5px solid var(--border)', paddingTop: 16, marginTop: 4 }}>
+  <button
+    onClick={onSignOut}
+    style={{
+      width: '100%', padding: '9px',
+      background: 'transparent', color: '#A32D2D',
+      border: '0.5px solid #F09595',
+      borderRadius: 8, fontSize: 13, cursor: 'pointer',
+    }}
+  >Sign out</button>
+</div>
+        
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 8, borderTop: '0.5px solid var(--border)' }}>
           <Button onClick={onClose}>Cancel</Button>
           <Button variant="primary" onClick={handleSave}>Save settings</Button>
