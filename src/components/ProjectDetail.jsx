@@ -108,11 +108,11 @@ export function ProjectDetail({
               {doneGoals}/{totalGoals} goals
             </span>
           )}
-          {project.targetDate && (
+          {project.targetDate && isValid(parseISO(project.targetDate)) && (
             <span style={{ fontSize: 11, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
-              Target: {format(new Date(project.targetDate), 'MMM d, yyyy')}
+              Target: {format(parseISO(project.targetDate), 'MMM d, yyyy')}
             </span>
-          )}
+            )}
         </div>
 
         {/* Inline tag editor */}
