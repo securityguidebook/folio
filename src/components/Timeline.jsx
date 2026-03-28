@@ -1,5 +1,5 @@
 import React from 'react'
-import { format, parseISO, startOfYear, endOfYear, differenceInDays } from 'date-fns'
+import { format, parseISO, startOfYear, endOfYear, differenceInDays, isValid } from 'date-fns'
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
@@ -11,7 +11,6 @@ export function Timeline({ projects }) {
 
   const todayPct = (differenceInDays(now, yearStart) / yearDays * 100).toFixed(2)
 
-  const projectsWithDates = projects.filter(p => p.startDate && p.targetDate)
   const projectsNoDates = projects.filter(p => !p.startDate || !p.targetDate)
 
 const projectsWithDates = projects.filter(p => {
