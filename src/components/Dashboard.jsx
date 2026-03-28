@@ -1,6 +1,6 @@
 import React from 'react'
 import { StatusPill, ProgressBar, SectionLabel, Button } from './UI.jsx'
-import { format } from 'date-fns'
+import { format, parseISO, isValid } from 'date-fns'
 
 function EmptyState({ onNew }) {
   return (
@@ -69,7 +69,9 @@ function ProjectCard({ project, onClick }) {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-3)', marginBottom: 10 }}>
         <span>{project.progress || 0}% complete</span>
-        {project.targetDate && <span>Target: {format(new Date(project.targetDate), 'MMM d, yyyy')}</span>}
+        {project.targetDate && isValid(parseISO(project.targetDate)) && (
+  <span>Target: {format(parseISO(project.targetDate), 'MMM d, yyyy')}</span>
+)}
       </div>
 
       {/* Tags */}
@@ -90,7 +92,7 @@ function ProjectCard({ project, onClick }) {
         {fileCount > 0 && <span>{fileCount} {fileCount === 1 ? 'file' : 'files'}</span>}
         {lastNote && (
           <span style={{ marginLeft: 'auto', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>
-            Last: {lastNote.title} · {format(new Date(lastNote.updatedAt || lastNote.createdAt), 'MMM d')}
+            Last: {lastNote.title} · {isValid(parseISO(lastNote.updatedAt || lastNote.createdAt)) ? format(parseISO(lastNote.updatedAt || lastNote.createdAt), 'MMM d') : '—'}
             </span>
         )}
       </div>
