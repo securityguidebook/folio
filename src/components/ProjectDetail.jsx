@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { format } from 'date-fns'
+import { format, parseISO, isValid } from 'date-fns'
 import { StatusPill, ProgressBar, Button, ConfirmModal } from './UI.jsx'
 import { Notes } from './Notes.jsx'
 import { Goals } from './Goals.jsx'
