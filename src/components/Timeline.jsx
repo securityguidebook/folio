@@ -14,8 +14,6 @@ export function Timeline({ projects }) {
   const projectsWithDates = projects.filter(p => p.startDate && p.targetDate)
   const projectsNoDates = projects.filter(p => !p.startDate || !p.targetDate)
 
-import { isValid, parseISO } from 'date-fns'
-
 const projectsWithDates = projects.filter(p => {
   if (!p.startDate || !p.targetDate) return false
   return isValid(parseISO(p.startDate)) && isValid(parseISO(p.targetDate))
