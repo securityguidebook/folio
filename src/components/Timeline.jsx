@@ -14,14 +14,12 @@ export function Timeline({ projects }) {
   const projectsWithDates = projects.filter(p => p.startDate && p.targetDate)
   const projectsNoDates = projects.filter(p => !p.startDate || !p.targetDate)
 
-  function getBar(p) {
-    const start = parseISO(p.startDate)
-    const end = parseISO(p.targetDate)
-    const left = Math.max(0, differenceInDays(start, yearStart) / yearDays * 100)
-    const right = Math.min(100, differenceInDays(end, yearStart) / yearDays * 100)
-    const width = Math.max(right - left, 1)
-    return { left, width }
-  }
+import { isValid, parseISO } from 'date-fns'
+
+const projectsWithDates = projects.filter(p => {
+  if (!p.startDate || !p.targetDate) return false
+  return isValid(parseISO(p.startDate)) && isValid(parseISO(p.targetDate))
+})
 
   return (
     <div style={{ padding: 24, height: '100%', overflowY: 'auto' }}>
