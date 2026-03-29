@@ -32,9 +32,13 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  useEffect(() => {
+// Debounced theme update
+useEffect(() => {
+  const timeout = setTimeout(() => {
     document.documentElement.setAttribute('data-theme', store.settings.theme || 'light')
-  }, [store.settings.theme])
+  }, 100)
+  return () => clearTimeout(timeout)
+}, [store.settings.theme])
 
   function navTo(v, id) {
     setView(v)
