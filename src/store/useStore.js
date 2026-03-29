@@ -49,7 +49,6 @@ export function useStore(user) {
         },
       }))
       setProjects(assembled)
-      }
     } catch (e) {
       console.error('Load error', e)
     } finally {
