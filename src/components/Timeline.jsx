@@ -3,6 +3,18 @@ import { format, parseISO, startOfYear, endOfYear, differenceInDays, isValid } f
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
+function getBar(p) {
+  const now = new Date()
+  const yearStart = startOfYear(now)
+  const yearEnd = endOfYear(now)
+  const yearDays = differenceInDays(yearEnd, yearStart) + 1
+  const start = parseISO(p.startDate)
+  const end = parseISO(p.targetDate)
+  const left = Math.max(0, differenceInDays(start, yearStart) / yearDays * 100)
+  const width = Math.min(100 - left, differenceInDays(end, start) / yearDays * 100)
+  return { left, width }
+}
+
 export function Timeline({ projects }) {
   const now = new Date()
   const yearStart = startOfYear(now)
