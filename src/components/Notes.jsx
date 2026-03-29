@@ -102,7 +102,8 @@ function NoteListItem({ note, active, onClick, onDelete }) {
         {note.title || 'Untitled note'}
       </div>
       <div style={{ fontSize: 11, color: 'var(--text-3)' }}>
-        {format(new Date(note.createdAt), 'MMM d, yyyy')}
+        {isValid(parseISO(note.createdAt)) ? format(parseISO(note.createdAt), 
+          'MMM d, yyyy') : '—'}
         {plain && <span style={{ marginLeft: 4 }}>· {plain}</span>}
       </div>
       {showDel && (
@@ -189,10 +190,12 @@ function exportNote(note, format) {
           }}
         />
         <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>
-          Created {format(new Date(note.createdAt), 'MMMM d, yyyy · h:mm a')}
-          {note.updatedAt && note.updatedAt !== note.createdAt && (
-            <span> · Updated {format(new Date(note.updatedAt), 'MMM d')}</span>
-          )}
+          Created {isValid(parseISO(note.createdAt)) ? 
+          format(parseISO(note.createdAt), 'MMMM d, yyyy · h:mm a') : '—'}
+         {note.updatedAt && note.updatedAt !== note.createdAt && 
+           isValid(parseISO(note.updatedAt)) && (
+            <span> · Updated {format(parseISO(note.updatedAt), 'MMM d')}</span>
+            )}
         </div>
         <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
   <button
@@ -275,7 +278,7 @@ function ResumeBanner({ note }) {
       <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--acc)', flexShrink: 0, marginTop: 4 }} />
       <div>
         <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--acc-d)', marginBottom: 3 }}>
-          Resume from: {format(new Date(note.updatedAt || note.createdAt), 'MMM d, yyyy')} — {note.title || 'Untitled'}
+          Resume from: {isValid(parseISO(note.updatedAt || note.createdAt)) ? format(parseISO(note.updatedAt || note.createdAt), 'MMM d, yyyy') : '—'} — {note.title || 'Untitled'}
         </div>
         <div style={{ fontSize: 12, color: 'var(--acc-m)', lineHeight: 1.55 }}>{plain}</div>
       </div>
