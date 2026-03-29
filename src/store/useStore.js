@@ -40,20 +40,24 @@ export function useStore(user) {
         })
       }
 
-      const assembled = (proj || []).map(p => ({
-        ...p,
-        startDate: p.start_date,
-        targetDate: p.target_date,
-        tags: Array.isArray(p.tags) ? p.tags : (p.tags ? p.tags.split(',') : []),
-        notes: (notes || []).filter(n => n.project_id === p.id),
-        goals: (goals || []).filter(g => g.project_id === p.id),
-        pipeline: {
-          backlog:    (pipeline || []).filter(i => i.project_id === p.id && i.column_key === 'backlog'),
-          upNext:     (pipeline || []).filter(i => i.project_id === p.id && i.column_key === 'upNext'),
-          inProgress: (pipeline || []).filter(i => i.project_id === p.id && i.column_key === 'inProgress'),
-          done:       (pipeline || []).filter(i => i.project_id === p.id && i.column_key === 'done'),
-        },
-      }))
+        const assembled = (proj || []).map(p => ({
+          ...p,
+            startDate: p.start_date || null,
+            targetDate: p.target_date || null,
+            tags: Array.isArray(p.tags) ? p.tags : (p.tags ? p.tags.split(',') : []),
+            notes: (notes || []).filter(n => n.project_id === p.id).map(n => ({
+              ...n,
+            createdAt: n.created_at,
+            updatedAt: n.updated_at,
+            })),
+  goals: (goals || []).filter(g => g.project_id === p.id),
+  pipeline: {
+    backlog:    (pipeline || []).filter(i => i.project_id === p.id && i.column_key === 'backlog'),
+    upNext:     (pipeline || []).filter(i => i.project_id === p.id && i.column_key === 'upNext'),
+    inProgress: (pipeline || []).filter(i => i.project_id === p.id && i.column_key === 'inProgress'),
+    done:       (pipeline || []).filter(i => i.project_id === p.id && i.column_key === 'done'),
+  },
+}))
       setProjects(assembled)
     } catch (e) {
       console.error('Load error', e)
