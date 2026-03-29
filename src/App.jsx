@@ -61,23 +61,7 @@ export default function App() {
   )
 }
 
-  if (store.loading) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-      <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Loading…</p>
-    </div>
-  )
-}
-
   if (!user) return <Auth />
-
-  if (store.loading) {
-    return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-3)' }}>
-        <div style={{ fontSize: 13, color: 'var(--text-3)' }}>Loading your projects…</div>
-      </div>
-    )
-  }
 
   const activeProject = store.projects.find(p => p.id === activeProjectId)
 
