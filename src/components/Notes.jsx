@@ -102,8 +102,7 @@ function NoteListItem({ note, active, onClick, onDelete }) {
         {note.title || 'Untitled note'}
       </div>
       <div style={{ fontSize: 11, color: 'var(--text-3)' }}>
-        {isValid(parseISO(note.createdAt)) ? format(parseISO(note.createdAt), 
-          'MMM d, yyyy') : '—'}
+        {isValid(parseISO(note.createdAt || note.created_at)) ? format(parseISO(note.createdAt || note.created_at), 'MMM d, yyyy') : '—'}
         {plain && <span style={{ marginLeft: 4 }}>· {plain}</span>}
       </div>
       {showDel && (
@@ -190,12 +189,12 @@ function exportNote(note, format) {
           }}
         />
         <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>
-          Created {isValid(parseISO(note.createdAt)) ? 
-          format(parseISO(note.createdAt), 'MMMM d, yyyy · h:mm a') : '—'}
-         {note.updatedAt && note.updatedAt !== note.createdAt && 
-           isValid(parseISO(note.updatedAt)) && (
-            <span> · Updated {format(parseISO(note.updatedAt), 'MMM d')}</span>
-            )}
+          Created {isValid(parseISO(note.createdAt || note.created_at)) ? 
+          format(parseISO(note.createdAt || note.created_at), 'MMMM d, yyyy · h:mm a') : '—'}
+         {(note.updatedAt || note.updated_at) && 
+           isValid(parseISO(note.updatedAt || note.updated_at)) && (
+          <span> · Updated {format(parseISO(note.updatedAt || note.updated_at), 'MMM d')}</span>
+          )}
         </div>
         <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
   <button
@@ -278,7 +277,7 @@ function ResumeBanner({ note }) {
       <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--acc)', flexShrink: 0, marginTop: 4 }} />
       <div>
         <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--acc-d)', marginBottom: 3 }}>
-          Resume from: {isValid(parseISO(note.updatedAt || note.createdAt)) ? format(parseISO(note.updatedAt || note.createdAt), 'MMM d, yyyy') : '—'} — {note.title || 'Untitled'}
+          Resume from: {isValid(parseISO(note.updatedAt || note.updated_at || note.createdAt || note.created_at)) ? format(parseISO(note.updatedAt || note.updated_at || note.createdAt || note.created_at), 'MMM d, yyyy') : '—'} — {note.title || 'Untitled'}
         </div>
         <div style={{ fontSize: 12, color: 'var(--acc-m)', lineHeight: 1.55 }}>{plain}</div>
       </div>
