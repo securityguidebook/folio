@@ -61,6 +61,14 @@ export default function App() {
     )
   }
 
+  if (store.loading) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+      <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Loading…</p>
+    </div>
+  )
+}
+
   if (!user) return <Auth />
 
   if (store.loading) {
