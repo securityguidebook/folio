@@ -141,7 +141,8 @@ function NoteEditor({ note, onSave }) {
     }, 600)
   }
 
-function exportNote(note, format) {
+function exportNote(note, exportFormat) {
+  if (exportFormat === 'md') {
   const plain = note.body
     ? note.body.replace(/<[^>]*>/g, '')
     : ''
