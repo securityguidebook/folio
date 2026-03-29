@@ -16,7 +16,8 @@ export function SettingsModal({ settings, onSave, onClose }) {
   }
 
   function handleExport() {
-    const data = localStorage.getItem('folio_data_v1')
+  if (typeof document === 'undefined') return
+  const data = localStorage.getItem('folio_data_v1')
     if (!data) return
     const blob = new Blob([data], { type: 'application/json' })
     const a = document.createElement('a')
@@ -26,7 +27,8 @@ export function SettingsModal({ settings, onSave, onClose }) {
   }
 
   function handleImport(e) {
-    const file = e.target.files[0]
+  if (typeof document === 'undefined') return
+  const file = e.target.files[0]
     if (!file) return
     const reader = new FileReader()
     reader.onload = ev => {
