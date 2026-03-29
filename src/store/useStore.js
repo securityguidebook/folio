@@ -49,11 +49,13 @@ export function useStore(user) {
         },
       }))
       setProjects(assembled)
+      }
     } catch (e) {
       console.error('Load error', e)
-    }
+    } finally {
     setLoading(false)
   }
+}
 
   // ── Projects ──────────────────────────────────────────────
   const addProject = useCallback(async (project) => {
