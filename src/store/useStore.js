@@ -15,7 +15,7 @@ export function useStore(user) {
   async function loadAll() {
     setLoading(true)
     try {
-      const [{ data: prof }, { data: proj }, { data: notes }, { data: goals }, { data: pipeline }] =
+      const [{ data: prof, error: profErr }, { data: proj, error: projErr }, { data: notes, error: notesErr }, { data: goals, error: goalsErr }, { data: pipeline, error: pipelineErr }] =
         await Promise.all([
           supabase.from('profiles').select('*').eq('id', user.id).single(),
           supabase.from('projects').select('*').eq('user_id', user.id).order('created_at'),
@@ -24,6 +24,12 @@ export function useStore(user) {
           supabase.from('pipeline_items').select('*').eq('user_id', user.id).order('created_at'),
         ])
 
+  if (profErr) console.error('Profiles load failed:', profErr)
+  if (projErr) console.error('Projects load failed:', projErr)
+  if (notesErr) console.error('Notes load failed:', notesErr)
+  if (goalsErr) console.error('Goals load failed:', goalsErr)
+  if (pipelineErr) console.error('Pipeline load failed:', pipelineErr)
+      
       if (prof) {
         setSettings({
           userName: prof.name || '',
@@ -38,7 +44,7 @@ export function useStore(user) {
         ...p,
         startDate: p.start_date,
         targetDate: p.target_date,
-        tags: p.tags || [],
+        tags: Array.isArray(p.tags) ? p.tags : (p.tags ? p.tags.split(',') : []),
         notes: (notes || []).filter(n => n.project_id === p.id),
         goals: (goals || []).filter(g => g.project_id === p.id),
         pipeline: {
