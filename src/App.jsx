@@ -53,13 +53,13 @@ export default function App() {
     setActiveProjectId(null)
   }
 
-  if (authLoading) {
-    return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-3)' }}>
-        <div style={{ fontSize: 13, color: 'var(--text-3)' }}>Loading…</div>
-      </div>
-    )
-  }
+  if (authLoading || (user && store.loading)) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+      <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Loading…</p>
+    </div>
+  )
+}
 
   if (store.loading) {
   return (
