@@ -142,7 +142,6 @@ function NoteEditor({ note, onSave }) {
   }
 
 function exportNote(note, exportFormat) {
-  if (exportFormat === 'md') {
   const plain = note.body
     ? note.body.replace(/<[^>]*>/g, '')
     : ''
@@ -151,8 +150,7 @@ function exportNote(note, exportFormat) {
   let mime = 'text/plain'
   let ext = 'txt'
 
-  if (format === 'md') {
-    // Preserve basic structure as markdown
+  if (exportFormat === 'md') {
     content = (note.title ? `# ${note.title}\n\n` : '') + plain
     ext = 'md'
   } else {
